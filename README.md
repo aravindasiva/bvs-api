@@ -106,7 +106,7 @@ Once the server is running, you can access the interactive API documentation at:
 ### Available Endpoints
 
 #### System Endpoints
-- `GET /health` - Health check
+- `GET /health` - API health check
 - `GET /ready` - Readiness check
 
 #### User Management
@@ -126,13 +126,13 @@ The application uses PostgreSQL with Prisma as the ORM. The database schema incl
 ### User Model
 ```typescript
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  email      String   @unique
+  id         String
+  email      String
   firstName  String?
   lastName   String?
   avatarUrl  String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime
+  updatedAt  DateTime
 }
 ```
 
