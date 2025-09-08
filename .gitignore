@@ -1,0 +1,15 @@
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+
+# Misc
+.DS_Store
+/src/generated/prisma
+
+/src/generated/prisma
