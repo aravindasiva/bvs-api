@@ -1,0 +1,43 @@
+name: Apply DB migrations to Neon (prod)
+
+on:
+  push:
+    branches: [ main ]
+    # Optional: only run when migrations change
+    # paths:
+    #   - "prisma/migrations/**"
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    # Prevent overlapping runs
+    concurrency: neon-prod-db
+    # Optional: add an Environment named "production" (Settings → Environments)
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Install dependencies without running lifecycle scripts (avoids prisma generate on CI)
+      - name: Install deps (no postinstall)
+        run: npm ci --ignore-scripts
+
+      # Apply migrations to Neon production using the DIRECT URL
+      - name: prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_DIRECT_PROD }}
+        run: npx prisma migrate deploy
+
+      # Optional: seed prod (enable only if you truly need prod seed data)
+      # - name: Seed production data
+      #   env:
+      #     DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_DIRECT_PROD }}
+      #   run: npx prisma db seed
