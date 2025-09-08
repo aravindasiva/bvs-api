@@ -21,20 +21,24 @@ A modern TypeScript REST API built with Fastify, featuring user management, data
 ## 🛠️ Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd bvs-api
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env
    ```
+
    Edit `.env` and configure your database connection and other settings.
 
 4. **Set up the database**
@@ -47,40 +51,41 @@ A modern TypeScript REST API built with Fastify, featuring user management, data
 
 The application uses the following environment variables:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment mode | `development` |
-| `PORT` | Server port | `3000` |
-| `DATABASE_URL` | PostgreSQL connection string | See `.env.example` |
-| `JWT_SECRET` | JWT signing secret | `change-me-super-secret` |
-| `JWT_ALG` | JWT algorithm | `HS256` |
-| `JWT_ISSUER` | JWT issuer | `bvs-api` |
-| `JWT_AUDIENCE` | JWT audience | `bvs-api` |
-| `JWT_EXPIRES_IN` | JWT expiration time | `15m` |
-| `CORS_ORIGIN` | CORS allowed origins | `*` |
-| `SENTRY_DSN` | Sentry error tracking DSN | (optional) |
+| Variable         | Description                  | Default                  |
+| ---------------- | ---------------------------- | ------------------------ |
+| `NODE_ENV`       | Environment mode             | `development`            |
+| `PORT`           | Server port                  | `3000`                   |
+| `DATABASE_URL`   | PostgreSQL connection string | See `.env.example`       |
+| `JWT_SECRET`     | JWT signing secret           | `change-me-super-secret` |
+| `JWT_ALG`        | JWT algorithm                | `HS256`                  |
+| `JWT_ISSUER`     | JWT issuer                   | `bvs-api`                |
+| `JWT_AUDIENCE`   | JWT audience                 | `bvs-api`                |
+| `JWT_EXPIRES_IN` | JWT expiration time          | `15m`                    |
+| `CORS_ORIGIN`    | CORS allowed origins         | `*`                      |
+| `SENTRY_DSN`     | Sentry error tracking DSN    | (optional)               |
 
 ## 🚀 Development
 
 ### Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build for production |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint issues |
-| `npm run format` | Format code with Prettier |
-| `npm run format:check` | Check code formatting |
-| `npm run prisma:generate` | Generate Prisma client |
-| `npm run prisma:migrate` | Run database migrations |
-| `npm run prisma:studio` | Open Prisma Studio |
-| `npm run seed` | Seed the database |
+| Command                   | Description                              |
+| ------------------------- | ---------------------------------------- |
+| `npm run dev`             | Start development server with hot reload |
+| `npm run build`           | Build for production                     |
+| `npm start`               | Start production server                  |
+| `npm run lint`            | Run ESLint                               |
+| `npm run lint:fix`        | Fix ESLint issues                        |
+| `npm run format`          | Format code with Prettier                |
+| `npm run format:check`    | Check code formatting                    |
+| `npm run prisma:generate` | Generate Prisma client                   |
+| `npm run prisma:migrate`  | Run database migrations                  |
+| `npm run prisma:studio`   | Open Prisma Studio                       |
+| `npm run seed`            | Seed the database                        |
 
 ### Development Workflow
 
 1. **Start the development server**
+
    ```bash
    npm run dev
    ```
@@ -88,6 +93,7 @@ The application uses the following environment variables:
 2. **Make your changes** - The server will automatically reload
 
 3. **Format and lint your code**
+
    ```bash
    npm run format
    npm run lint:fix
@@ -101,15 +107,18 @@ The application uses the following environment variables:
 ## 📚 API Documentation
 
 Once the server is running, you can access the interactive API documentation at:
+
 - **Swagger UI**: `http://localhost:3000/docs`
 
 ### Available Endpoints
 
 #### System Endpoints
+
 - `GET /health` - API health check
 - `GET /ready` - Readiness check
 
 #### User Management
+
 - `GET /users` - List all users with pagination
 - `GET /users/:id` - Get user by ID
 - `POST /users` - Create a new user
@@ -117,6 +126,7 @@ Once the server is running, you can access the interactive API documentation at:
 - `DELETE /users/:id` - Delete user by ID
 
 #### Database
+
 - `GET /db/health` - Database health check
 
 ## 🗄️ Database
@@ -124,6 +134,7 @@ Once the server is running, you can access the interactive API documentation at:
 The application uses PostgreSQL with Prisma as the ORM. The database schema includes:
 
 ### User Model
+
 ```typescript
 model User {
   id         String
@@ -137,6 +148,7 @@ model User {
 ```
 
 ### Database Commands
+
 ```bash
 # Generate Prisma client after schema changes
 npm run prisma:generate
@@ -190,6 +202,7 @@ npm run dev
 ## 🚀 Production Deployment
 
 1. **Build the application**
+
    ```bash
    npm run build
    ```
@@ -201,6 +214,7 @@ npm run dev
    - Configure `CORS_ORIGIN` with your domain
 
 3. **Run database migrations**
+
    ```bash
    npm run prisma:migrate
    ```
