@@ -12,6 +12,7 @@ import {
   ConflictSchema,
 } from "./userSchemas";
 import { listUsers, getUser, createUser, updateUser, deleteUser } from "./userController";
+import { requireAuth } from "../auth/requireAuth";
 
 const userRoute: FastifyPluginAsync = async (app) => {
   const api = app.withTypeProvider<ZodTypeProvider>();
@@ -24,7 +25,9 @@ const userRoute: FastifyPluginAsync = async (app) => {
         summary: "List users",
         querystring: ListUsersQuerySchema,
         response: { 200: UsersListResponseSchema },
+        security: [{ bearerAuth: [] }],
       },
+      preHandler: [requireAuth],
     },
     listUsers,
   );
@@ -37,7 +40,9 @@ const userRoute: FastifyPluginAsync = async (app) => {
         summary: "Get user by id",
         params: IdParamSchema,
         response: { 200: UserSchema, 404: NotFoundSchema },
+        security: [{ bearerAuth: [] }],
       },
+      preHandler: [requireAuth],
     },
     getUser,
   );
@@ -50,7 +55,9 @@ const userRoute: FastifyPluginAsync = async (app) => {
         summary: "Create user",
         body: CreateUserBodySchema,
         response: { 201: UserSchema, 409: ConflictSchema },
+        security: [{ bearerAuth: [] }],
       },
+      preHandler: [requireAuth],
     },
     createUser,
   );
@@ -64,7 +71,9 @@ const userRoute: FastifyPluginAsync = async (app) => {
         params: IdParamSchema,
         body: UpdateUserBodySchema,
         response: { 200: UserSchema, 404: NotFoundSchema, 409: ConflictSchema },
+        security: [{ bearerAuth: [] }],
       },
+      preHandler: [requireAuth],
     },
     updateUser,
   );
@@ -76,9 +85,10 @@ const userRoute: FastifyPluginAsync = async (app) => {
         tags: ["users"],
         summary: "Delete user",
         params: IdParamSchema,
-        // Use a Zod schema for 204 or omit it entirely. z.void() also works fine here.
         response: { 204: z.null(), 404: NotFoundSchema },
+        security: [{ bearerAuth: [] }],
       },
+      preHandler: [requireAuth],
     },
     deleteUser,
   );

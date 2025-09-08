@@ -1,7 +1,12 @@
 import { PrismaClient } from "@prisma/client";
+import { hashPassword } from "../src/shared/crypto";
+
 const prisma = new PrismaClient();
 
-async function main() {
+async function main() 
+{
+  const DEFAULT_PASSWORD = "ChangeMe123!";
+
   const users = [
     {
       email: "test@example.com",
@@ -24,18 +29,31 @@ async function main() {
     { email: "carol@example.com", firstName: "Carol", lastName: "Clark", avatarUrl: null },
   ];
 
-  for (const u of users) {
+  for (const u of users) 
+{
+    const passwordHash = await hashPassword(DEFAULT_PASSWORD);
+
     await prisma.user.upsert({
       where: { email: u.email },
-      update: { firstName: u.firstName, lastName: u.lastName, avatarUrl: u.avatarUrl },
-      create: u,
+      update: {
+        firstName: u.firstName,
+        lastName: u.lastName,
+        avatarUrl: u.avatarUrl,
+        passwordHash,
+      },
+      create: {
+        ...u,
+        passwordHash,
+      },
     });
   }
+
+  console.log("Seed complete. Default password for all users:", DEFAULT_PASSWORD);
 }
 
 main()
-  .then(() => console.log("Seed complete"))
-  .catch((e) => {
+  .catch((e) => 
+{
     console.error(e);
     process.exit(1);
   })
