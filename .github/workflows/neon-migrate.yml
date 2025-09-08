@@ -3,9 +3,10 @@ name: Apply DB migrations to Neon (prod)
 on:
   push:
     branches: [ main ]
-    # Optional: only run when migrations change
-    # paths:
-    #   - "prisma/migrations/**"
+    # only run when migrations change
+    paths:
+      - "prisma/migrations/**"
+
   workflow_dispatch:
 
 jobs:
