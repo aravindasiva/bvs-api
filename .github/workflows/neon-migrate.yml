@@ -3,19 +3,21 @@ name: Apply DB migrations to Neon (prod)
 on:
   push:
     branches: [ main ]
-    # only run when migrations change
-    paths:
-      - "prisma/migrations/**"
-
+    # Optional: run only when migration files change
+    # paths:
+    #   - "prisma/migrations/**"
   workflow_dispatch:
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    # Prevent overlapping runs
     concurrency: neon-prod-db
-    # Optional: add an Environment named "production" (Settings → Environments)
+    # Optional: add an Environment named "production" in repo settings to require approvals
     environment: production
+
+    # Map optional Render deploy hook secret to env so we can use it in "if:"
+    env:
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
 
     steps:
       - name: Checkout
@@ -27,23 +29,18 @@ jobs:
           node-version: 20
           cache: npm
 
-      # Install dependencies without running lifecycle scripts (avoids prisma generate on CI)
-      - name: Install deps (no postinstall)
+      - name: Install deps (no lifecycle scripts)
         run: npm ci --ignore-scripts
 
-      # Apply migrations to Neon production using the DIRECT URL
-      - name: prisma migrate deploy
+      - name: Apply Prisma migrations (Neon prod)
         env:
+          # Use the DIRECT connection string for Neon production (not pooled).
+          # Secret must include: sslmode=require&channel_binding=prefer
+          # Do NOT include: pgbouncer=true or use a -pooler host.
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_DIRECT_PROD }}
         run: npx prisma migrate deploy
 
-      # Optional: seed prod (enable only if you truly need prod seed data)
-      # - name: Seed production data
-      #   env:
-      #     DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_DIRECT_PROD }}
-      #   run: npx prisma db seed
-
-      # Optional: trigger Render deploy after successful migrationsÏ
+      # Optional: trigger Render deploy after successful migrations
       - name: Trigger Render deploy
-        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
-        run: curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"Ï
+        if: ${{ env.RENDER_DEPLOY_HOOK != '' }}
+        run: curl -fsSL -X POST "${{ env.RENDER_DEPLOY_HOOK }}"
