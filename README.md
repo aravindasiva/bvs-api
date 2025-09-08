@@ -1,6 +1,6 @@
 # BVS API
 
-A modern TypeScript REST API built with Fastify, featuring user management, database integration with Prisma ORM, and comprehensive API documentation.
+A modern TypeScript REST API built with Fastify, featuring user management, database integration with Prisma ORM, and comprehensive swagger API documentation.
 
 ## 🚀 Features
 
