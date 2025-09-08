@@ -42,3 +42,8 @@ jobs:
       #   env:
       #     DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_DIRECT_PROD }}
       #   run: npx prisma db seed
+
+      # Optional: trigger Render deploy after successful migrationsÏ
+      - name: Trigger Render deploy
+        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        run: curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"Ï
