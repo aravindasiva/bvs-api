@@ -8,7 +8,7 @@
 
   // Make sure Prisma uses Prettier (with prettier-plugin-prisma)
   "[prisma]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "Prisma.prisma"
   },
 
   // Helpful, but optional
@@ -17,5 +17,8 @@
   },
   "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
   }
 }
