@@ -12,7 +12,8 @@ const redact = [
 export const genReqId: FastifyServerOptions["genReqId"] = () =>
   Math.random().toString(36).slice(2, 8);
 
-export function createLogger(isProd: boolean): FastifyServerOptions["logger"] {
+export function createLogger(isProd: boolean): FastifyServerOptions["logger"] 
+{
   return isProd
     ? { level: "info", redact }
     : {

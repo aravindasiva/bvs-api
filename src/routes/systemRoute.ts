@@ -4,7 +4,8 @@ import { z } from "zod";
 
 const OkSchema = z.object({ ok: z.boolean() });
 
-const systemRoutes: FastifyPluginAsync = async (app) => {
+const systemRoutes: FastifyPluginAsync = async (app) => 
+{
   const api = app.withTypeProvider<ZodTypeProvider>();
 
   api.get(

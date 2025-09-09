@@ -11,6 +11,7 @@ export const ListUsersQuerySchema = z.object({
 
 export const CreateUserBodySchema = z.object({
   email: z.string().email(),
+  password: z.string().min(8), // REQUIRED now that passwordHash is NOT NULL
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   avatarUrl: z.string().url().optional(),
@@ -19,6 +20,7 @@ export const CreateUserBodySchema = z.object({
 export const UpdateUserBodySchema = z
   .object({
     email: z.string().email().optional(),
+    password: z.string().min(8).optional(),
     firstName: z.string().min(1).nullable().optional(),
     lastName: z.string().min(1).nullable().optional(),
     avatarUrl: z.string().url().nullable().optional(),
