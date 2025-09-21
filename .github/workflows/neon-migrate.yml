@@ -2,7 +2,7 @@ name: Apply DB migrations to Neon (prod)
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     # Optional: run only when migration files change
     # paths:
     #   - "prisma/migrations/**"
