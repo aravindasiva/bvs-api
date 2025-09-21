@@ -12,6 +12,10 @@ on:
         type: boolean
         description: "Run npm run seed after migrations against Neon prod (DANGER for prod data)"
         default: false
+      reset_and_seed:
+        type: boolean
+        description: "Run npm run prisma reset and seed after migrations against Neon prod (DANGER for prod data)"
+        default: false
 
 jobs:
   migrate:
@@ -54,6 +58,13 @@ jobs:
           # Same DIRECT connection string to run prisma db seed (tsx prisma/seed.ts)
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_DIRECT_PROD }}
         run: npm run seed
+        
+      - name: RESET and SEED database (optional)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.reset_and_seed }}
+        env:
+          # Same DIRECT connection string to run prisma db seed (tsx prisma/seed.ts)
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_DIRECT_PROD }}
+        run: npm run prisma:reset
 
       # Optional: trigger Render deploy after successful migrations (and optional seed)
       - name: Trigger Render deploy
