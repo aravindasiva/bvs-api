@@ -154,7 +154,7 @@ bvs-api/
 General steps:
 
 1. Build: `npm run build`
-2. Provide production env vars (DATABASE*URL, JWT*\*, CORS_ORIGIN, PORT, NODE_ENV=production)
+2. Provide production env vars (DATABASE_URL, JWT_*, CORS_ORIGIN, PORT, NODE_ENV=production)
 3. Run migrations: `npm run prisma:migrate`
 4. Start: `npm start`
 
