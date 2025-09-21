@@ -7,7 +7,9 @@ A modern TypeScript REST API built with Fastify, featuring user management, data
 - **Fast & Lightweight**: Built with Fastify for high performance
 - **Type-Safe**: Full TypeScript support with Zod schema validation
 - **Database**: PostgreSQL with Prisma ORM for type-safe database operations
-- **API Documentation**: Auto-generated OpenAPI/Swagger documentation
+- **Authentication**: JWT-based authentication with Bearer tokens
+- **Authorization**: Role-based access control (RBAC) with global roles and client memberships
+- **API Documentation**: Auto-generated OpenAPI/Swagger documentation with authentication support
 - **Security**: Built-in CORS, Helmet, and security plugins
 - **Development Tools**: Hot reload, linting, formatting, and more
 - **Docker Ready**: Docker Compose setup for easy development
@@ -51,18 +53,34 @@ A modern TypeScript REST API built with Fastify, featuring user management, data
 
 The application uses the following environment variables:
 
-| Variable         | Description                  | Default                  |
-| ---------------- | ---------------------------- | ------------------------ |
-| `NODE_ENV`       | Environment mode             | `development`            |
-| `PORT`           | Server port                  | `3000`                   |
-| `DATABASE_URL`   | PostgreSQL connection string | See `.env.example`       |
-| `JWT_SECRET`     | JWT signing secret           | `change-me-super-secret` |
-| `JWT_ALG`        | JWT algorithm                | `HS256`                  |
-| `JWT_ISSUER`     | JWT issuer                   | `bvs-api`                |
-| `JWT_AUDIENCE`   | JWT audience                 | `bvs-api`                |
-| `JWT_EXPIRES_IN` | JWT expiration time          | `15m`                    |
-| `CORS_ORIGIN`    | CORS allowed origins         | `*`                      |
-| `SENTRY_DSN`     | Sentry error tracking DSN    | (optional)               |
+| Variable            | Description                  | Default                 |
+| ------------------- | ---------------------------- | ----------------------- |
+| `NODE_ENV`          | Environment mode             | `development`           |
+| `PORT`              | Server port                  | `3000`                  |
+| `DATABASE_URL`      | PostgreSQL connection string | See `.env.example`      |
+| `JWT_ACCESS_SECRET` | JWT signing secret           | `paste-hex-secret-here` |
+| `ACCESS_TOKEN_TTL`  | JWT expiration time          | `1d`                    |
+| `CORS_ORIGIN`       | CORS allowed origins         | `*`                     |
+| `SENTRY_DSN`        | Sentry error tracking DSN    | (optional)              |
+
+### JWT Configuration
+
+For JWT authentication, you need to generate a strong secret:
+
+```bash
+# Using OpenSSL
+openssl rand -hex 64
+
+# Using Node.js
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+Update your `.env` file with the generated secret:
+
+```env
+JWT_ACCESS_SECRET="your-generated-secret-here"
+ACCESS_TOKEN_TTL="1d"  # or "15m", "1h", "7d", etc.
+```
 
 ## 🚀 Development
 
@@ -77,8 +95,9 @@ The application uses the following environment variables:
 | `npm run lint:fix`        | Fix ESLint issues                        |
 | `npm run format`          | Format code with Prettier                |
 | `npm run format:check`    | Check code formatting                    |
-| `npm run prisma:generate` | Generate Prisma client                   |
+| `npm run prisma:reset`    | Reset database and run migrations        |
 | `npm run prisma:migrate`  | Run database migrations                  |
+| `npm run prisma:generate` | Generate Prisma client                   |
 | `npm run prisma:studio`   | Open Prisma Studio                       |
 | `npm run seed`            | Seed the database                        |
 
@@ -110,6 +129,127 @@ Once the server is running, you can access the interactive API documentation at:
 
 - **Swagger UI**: `http://localhost:3000/docs`
 
+## 🔐 Authentication & Authorization
+
+The API uses JWT (JSON Web Tokens) for authentication and implements role-based access control (RBAC).
+
+### Authentication Flow
+
+1. **Register or Login** to get an access token
+2. **Include the token** in the Authorization header: `Bearer <your-token>`
+3. **Access protected endpoints** with your authenticated requests
+
+### User Roles & Permissions
+
+#### Global Roles
+
+- **BVS_ADMIN**: Full system access, can perform all operations
+
+#### Client Types & Memberships
+
+- **VESSEL_OWNER**: Can view users within their organization type
+- **VESSEL_CHARTERER**: Can view users within their organization type
+
+### Authentication Endpoints
+
+#### Register a New User
+
+```http
+POST /auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword123",
+  "firstName": "John",
+  "lastName": "Doe",
+  "avatarUrl": "https://example.com/avatar.jpg"
+}
+```
+
+#### Login
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+Response:
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "createdAt": "2023-01-01T00:00:00.000Z",
+    "updatedAt": "2023-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### Get Current User
+
+```http
+GET /auth/me
+Authorization: Bearer <your-token>
+```
+
+Response:
+
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "createdAt": "2023-01-01T00:00:00.000Z",
+    "updatedAt": "2023-01-01T00:00:00.000Z"
+  },
+  "access": {
+    "isBvsAdmin": false,
+    "memberships": [
+      {
+        "clientId": "uuid",
+        "clientType": "VESSEL_OWNER"
+      }
+    ]
+  }
+}
+```
+
+### Using Protected Endpoints
+
+Include the JWT token in the Authorization header:
+
+```http
+GET /users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### Test Users (from seed data)
+
+The following test users are created when you run `npm run seed`:
+
+| Role             | Email                 | Password    | Description         |
+| ---------------- | --------------------- | ----------- | ------------------- |
+| BVS Admin        | `admin@bvs.com`       | `test12345` | Full system access  |
+| BVS Admin        | `admin2@test.com`     | `test12345` | Full system access  |
+| Vessel Owner     | `owner1@test.com`     | `test12345` | OwnerCo member      |
+| Vessel Owner     | `owner2@test.com`     | `test12345` | OwnerCo2 member     |
+| Vessel Charterer | `charterer1@test.com` | `test12345` | ChartererCo member  |
+| Vessel Charterer | `charterer2@test.com` | `test12345` | ChartererCo2 member |
+
 ### Available Endpoints
 
 #### System Endpoints
@@ -117,33 +257,109 @@ Once the server is running, you can access the interactive API documentation at:
 - `GET /health` - API health check
 - `GET /ready` - Readiness check
 
-#### User Management
+#### Authentication
 
-- `GET /users` - List all users with pagination
-- `GET /users/:id` - Get user by ID
-- `POST /users` - Create a new user
-- `PATCH /users/:id` - Update user by ID
-- `DELETE /users/:id` - Delete user by ID
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - Login with email and password
+- `GET /auth/me` - Get current user info (requires authentication)
+
+#### User Management (Protected)
+
+All user endpoints require authentication. Authorization rules apply:
+
+- **Admins**: Full access to all operations
+- **Vessel Owners/Charterers**: Can only view users within their client type
+
+- `GET /users` - List users with role-based filtering
+- `GET /users/:id` - Get user by ID (with access control)
+- `POST /users` - Create a new user (admin only)
+- `PATCH /users/:id` - Update user by ID (admin only)
+- `DELETE /users/:id` - Delete user by ID (admin only)
 
 #### Database
 
-- `GET /db/health` - Database health check
+- `GET /db/ping` - Database connectivity check
 
 ## 🗄️ Database
 
-The application uses PostgreSQL with Prisma as the ORM. The database schema includes:
+The application uses PostgreSQL with Prisma as the ORM. The database schema includes a comprehensive user management system with role-based access control.
 
-### User Model
+### Core Models
+
+#### User Model
 
 ```typescript
 model User {
-  id         String
-  email      String
-  firstName  String?
-  lastName   String?
-  avatarUrl  String?
-  createdAt  DateTime
-  updatedAt  DateTime
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  firstName    String?
+  lastName     String?
+  avatarUrl    String?
+  passwordHash String   // REQUIRED for local auth
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships Membership[]
+  globalRoles UserGlobalRole[]
+}
+```
+
+#### Client Model
+
+```typescript
+model Client {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String     @unique
+  type      ClientType // VESSEL_OWNER | VESSEL_CHARTERER
+  logoUrl   String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  memberships Membership[]
+}
+```
+
+#### Membership Model
+
+```typescript
+model Membership {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  clientId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientId])
+}
+```
+
+#### UserGlobalRole Model
+
+```typescript
+model UserGlobalRole {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String     @db.Uuid
+  role      GlobalRole // BVS_ADMIN
+  createdAt DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+}
+```
+
+### Enums
+
+```typescript
+enum ClientType {
+  VESSEL_OWNER
+  VESSEL_CHARTERER
+}
+
+enum GlobalRole {
+  BVS_ADMIN
 }
 ```
 
@@ -168,12 +384,36 @@ npm run seed
 ```
 bvs-api/
 ├── src/
+│   ├── access/          # Access control utilities
+│   │   └── accessControl.ts
 │   ├── config/          # Configuration files
+│   │   ├── auth.ts      # JWT configuration
+│   │   └── logger.ts    # Logging configuration
 │   ├── modules/         # Feature modules
+│   │   ├── auth/        # Authentication module
+│   │   │   ├── authController.ts
+│   │   │   ├── authRoute.ts
+│   │   │   ├── authSchemas.ts
+│   │   │   ├── authService.ts
+│   │   │   └── requireAuth.ts
 │   │   └── users/       # User management module
+│   │       ├── userController.ts
+│   │       ├── userRoute.ts
+│   │       ├── userSchemas.ts
+│   │       └── userService.ts
 │   ├── plugins/         # Fastify plugins
+│   │   ├── prisma.ts    # Database plugin
+│   │   └── security.ts  # Security middleware
 │   ├── routes/          # System routes
+│   │   ├── dbRoute.ts   # Database health checks
+│   │   └── systemRoute.ts
 │   ├── shared/          # Shared utilities
+│   │   ├── crypto.ts    # Password hashing
+│   │   ├── jwt.ts       # JWT utilities
+│   │   └── errors/      # Error handling
+│   ├── types/           # TypeScript type definitions
+│   │   ├── fastify.d.ts # Fastify augmentations
+│   │   └── uuid.ts      # UUID utilities
 │   └── server.ts        # Main application entry point
 ├── prisma/
 │   ├── migrations/      # Database migrations
@@ -209,9 +449,10 @@ npm run dev
 
 2. **Set production environment variables**
    - Ensure `NODE_ENV=production`
-   - Configure secure `JWT_SECRET`
-   - Set appropriate `DATABASE_URL`
-   - Configure `CORS_ORIGIN` with your domain
+   - Generate a strong `JWT_ACCESS_SECRET` (use the commands in Environment Configuration)
+   - Configure appropriate `ACCESS_TOKEN_TTL` (recommended: `1h` or `24h`)
+   - Set secure `DATABASE_URL` with SSL
+   - Configure `CORS_ORIGIN` with your domain(s)
 
 3. **Run database migrations**
 
@@ -219,10 +460,31 @@ npm run dev
    npm run prisma:migrate
    ```
 
-4. **Start the production server**
+4. **Seed the database** (optional for production)
+
+   ```bash
+   npm run seed
+   ```
+
+   **Note**: The seed creates test users with the password `test12345`. For production, either:
+   - Skip seeding and create admin users manually
+   - Change the default password in the seed script
+   - Remove test users after creating proper admin accounts
+
+5. **Start the production server**
    ```bash
    npm start
    ```
+
+### Security Considerations
+
+- Use a strong, unique `JWT_ACCESS_SECRET` in production
+- Set appropriate `ACCESS_TOKEN_TTL` (balance security vs. user experience)
+- Configure `CORS_ORIGIN` to specific domains
+- Use HTTPS in production
+- Regularly rotate JWT secrets
+- Monitor authentication logs
+- Implement rate limiting for auth endpoints
 
 ## 🔧 Technology Stack
 
@@ -267,9 +529,27 @@ This project is private and proprietary.
    - Change the `PORT` environment variable
    - Kill existing processes: `lsof -ti:3000 | xargs kill`
 
+4. **Authentication errors**
+   - Verify `JWT_ACCESS_SECRET` is set in `.env`
+   - Ensure the secret is at least 32 characters long (64 hex characters recommended)
+   - Check token expiration (`ACCESS_TOKEN_TTL`)
+   - Verify Bearer token format: `Authorization: Bearer <token>`
+
+5. **Authorization errors (403 Forbidden)**
+   - Check user roles: Use `/auth/me` to verify user permissions
+   - Ensure proper client memberships for non-admin users
+   - Admin operations require `BVS_ADMIN` global role
+
+6. **Prisma/Database migration issues**
+   - Reset database: `npm run prisma:reset`
+   - Regenerate client: `npm run prisma:generate`
+   - Re-seed database: `npm run seed`
+
 ### Development Tips
 
 - Use `npm run prisma:studio` to visually inspect your database
 - Check the Swagger documentation at `/docs` for API details
 - Monitor logs in development mode for debugging
 - Use environment-specific configurations for different deployment stages
+- Test authentication with the provided seed users
+- Use `/auth/me` endpoint to verify token validity and user permissions
