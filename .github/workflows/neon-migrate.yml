@@ -64,7 +64,7 @@ jobs:
         env:
           # Same DIRECT connection string to run prisma db seed (tsx prisma/seed.ts)
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_DIRECT_PROD }}
-        run: npm run prisma:reset --force
+        run: npm run prisma:reset -- --force
 
       # Optional: trigger Render deploy after successful migrations (and optional seed)
       - name: Trigger Render deploy
