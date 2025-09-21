@@ -1,275 +1,169 @@
 # BVS API
 
-A modern TypeScript REST API built with Fastify, featuring user management, database integration with Prisma ORM, and comprehensive swagger API documentation.
+A modern TypeScript REST API built with Fastify, Prisma (PostgreSQL), JWT authentication, and role-based access control (RBAC).
 
-## 🚀 Features
+- Live API Docs (Production): https://bvs-api.onrender.com/docs
+- Local API Docs: http://localhost:3000/docs
 
-- **Fast & Lightweight**: Built with Fastify for high performance
-- **Type-Safe**: Full TypeScript support with Zod schema validation
-- **Database**: PostgreSQL with Prisma ORM for type-safe database operations
-- **API Documentation**: Auto-generated OpenAPI/Swagger documentation
-- **Security**: Built-in CORS, Helmet, and security plugins
-- **Development Tools**: Hot reload, linting, formatting, and more
-- **Docker Ready**: Docker Compose setup for easy development
+## Features
 
-## 📋 Prerequisites
+- Fastify + TypeScript + Zod validation
+- PostgreSQL via Prisma ORM
+- JWT auth with secure password hashing
+- RBAC: global roles (e.g., BVS_ADMIN) and client-type scoped memberships
+- Swagger/OpenAPI docs
+- Ready-to-use dev scripts and Docker Compose for local DB
 
-- Node.js >= 20.0.0
-- PostgreSQL database
-- npm or yarn package manager
+## Quick Start (Local)
 
-## 🛠️ Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd bvs-api
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edit `.env` and configure your database connection and other settings.
-
-4. **Set up the database**
-   ```bash
-   npm run prisma:migrate
-   npm run seed
-   ```
-
-## ⚙️ Environment Configuration
-
-The application uses the following environment variables:
-
-| Variable         | Description                  | Default                  |
-| ---------------- | ---------------------------- | ------------------------ |
-| `NODE_ENV`       | Environment mode             | `development`            |
-| `PORT`           | Server port                  | `3000`                   |
-| `DATABASE_URL`   | PostgreSQL connection string | See `.env.example`       |
-| `JWT_SECRET`     | JWT signing secret           | `change-me-super-secret` |
-| `JWT_ALG`        | JWT algorithm                | `HS256`                  |
-| `JWT_ISSUER`     | JWT issuer                   | `bvs-api`                |
-| `JWT_AUDIENCE`   | JWT audience                 | `bvs-api`                |
-| `JWT_EXPIRES_IN` | JWT expiration time          | `15m`                    |
-| `CORS_ORIGIN`    | CORS allowed origins         | `*`                      |
-| `SENTRY_DSN`     | Sentry error tracking DSN    | (optional)               |
-
-## 🚀 Development
-
-### Available Scripts
-
-| Command                   | Description                              |
-| ------------------------- | ---------------------------------------- |
-| `npm run dev`             | Start development server with hot reload |
-| `npm run build`           | Build for production                     |
-| `npm start`               | Start production server                  |
-| `npm run lint`            | Run ESLint                               |
-| `npm run lint:fix`        | Fix ESLint issues                        |
-| `npm run format`          | Format code with Prettier                |
-| `npm run format:check`    | Check code formatting                    |
-| `npm run prisma:generate` | Generate Prisma client                   |
-| `npm run prisma:migrate`  | Run database migrations                  |
-| `npm run prisma:studio`   | Open Prisma Studio                       |
-| `npm run seed`            | Seed the database                        |
-
-### Development Workflow
-
-1. **Start the development server**
-
-   ```bash
-   npm run dev
-   ```
-
-2. **Make your changes** - The server will automatically reload
-
-3. **Format and lint your code**
-
-   ```bash
-   npm run format
-   npm run lint:fix
-   ```
-
-4. **Run database migrations** (if you modify the schema)
-   ```bash
-   npm run prisma:migrate
-   ```
-
-## 📚 API Documentation
-
-Once the server is running, you can access the interactive API documentation at:
-
-- **Swagger UI**: `http://localhost:3000/docs`
-
-### Available Endpoints
-
-#### System Endpoints
-
-- `GET /health` - API health check
-- `GET /ready` - Readiness check
-
-#### User Management
-
-- `GET /users` - List all users with pagination
-- `GET /users/:id` - Get user by ID
-- `POST /users` - Create a new user
-- `PATCH /users/:id` - Update user by ID
-- `DELETE /users/:id` - Delete user by ID
-
-#### Database
-
-- `GET /db/health` - Database health check
-
-## 🗄️ Database
-
-The application uses PostgreSQL with Prisma as the ORM. The database schema includes:
-
-### User Model
-
-```typescript
-model User {
-  id         String
-  email      String
-  firstName  String?
-  lastName   String?
-  avatarUrl  String?
-  createdAt  DateTime
-  updatedAt  DateTime
-}
-```
-
-### Database Commands
+1. Clone and install
 
 ```bash
-# Generate Prisma client after schema changes
-npm run prisma:generate
+git clone <repository-url>
+cd bvs-api
+npm install
+```
 
-# Create and apply new migration
+2. Configure environment
+
+```bash
+cp .env.example .env
+# edit .env with your DATABASE_URL and JWT_* values
+```
+
+3. Setup database
+
+```bash
 npm run prisma:migrate
-
-# Open Prisma Studio (database GUI)
-npm run prisma:studio
-
-# Seed the database with initial data
 npm run seed
 ```
 
-## 📁 Project Structure
+4. Run the API
+
+```bash
+npm run dev
+# Open http://localhost:3000/docs
+```
+
+## Environment
+
+| Variable       | Description                | Example/Default  |
+| -------------- | -------------------------- | ---------------- |
+| NODE_ENV       | Environment mode           | development      |
+| PORT           | Server port                | 3000             |
+| DATABASE_URL   | Postgres connection string | see .env.example |
+| JWT_SECRET     | JWT signing secret         | change-me        |
+| JWT_ISSUER     | JWT issuer                 | bvs-api          |
+| JWT_AUDIENCE   | JWT audience               | bvs-api          |
+| JWT_EXPIRES_IN | Access token TTL           | 15m              |
+| CORS_ORIGIN    | Allowed origins            | \*               |
+
+## API Overview
+
+- Swagger UI: /docs
+- Health: GET /health, GET /ready, GET /db/health
+
+Auth
+
+- POST /auth/register
+- POST /auth/login → returns a JWT containing:
+  - roles: string[]
+  - memberships: [{ clientId, clientType }]
+- GET /auth/me
+
+Users
+
+- GET /users (pagination: limit, offset)
+  - Admin: all users
+  - Non-admin: only users that share your clientType via membership
+- GET /users/:id
+  - Admin: any user
+  - Non-admin: allowed if the target user has a membership with the same clientType
+- POST /users, PATCH /users/:id, DELETE /users/:id (admin only)
+
+## Seeding
+
+The seed creates:
+
+- Admins: admin@bvs.com, admin2@test.com
+- Owners: owner1@test.com, owner2@test.com
+- Charterers: charterer1@test.com, charterer2@test.com
+- Clients: OwnerCo, OwnerCo2 (VESSEL_OWNER), ChartererCo, ChartererCo2 (VESSEL_CHARTERER)
+- Memberships: each owner/charterer is linked to their respective client
+- Default password (all seeded users): test12345
+
+## Architecture (High-Level)
+
+```
+Client (Frontend or API consumer)
+        |
+        v
+   Fastify Server
+   - Routes (auth, users, system)
+   - Zod validation
+   - JWT middleware (requireAuth)
+   - RBAC checks (admin vs clientType scope)
+        |
+        v
+     Services
+   - Business logic
+   - Data selection/mapping
+        |
+        v
+     Prisma ORM
+   - PostgreSQL
+   - Models: User, Client, Membership, UserGlobalRole
+```
+
+Concepts
+
+- Global roles live on the user (e.g., BVS_ADMIN).
+- Memberships associate users to clients; each client has a type (VESSEL_OWNER or VESSEL_CHARTERER).
+- Non-admin access is scoped by matching clientType with the target resource.
+
+## Project Structure
 
 ```
 bvs-api/
 ├── src/
-│   ├── config/          # Configuration files
-│   ├── modules/         # Feature modules
-│   │   └── users/       # User management module
+│   ├── modules/         # Feature modules (auth, users, etc.)
+│   ├── shared/          # Utilities (crypto, jwt, etc.)
 │   ├── plugins/         # Fastify plugins
 │   ├── routes/          # System routes
-│   ├── shared/          # Shared utilities
-│   └── server.ts        # Main application entry point
+│   └── server.ts        # App entry point
 ├── prisma/
 │   ├── migrations/      # Database migrations
-│   ├── schema.prisma    # Database schema
-│   └── seed.ts          # Database seeding script
-├── dist/                # Built application (after npm run build)
-├── docker-compose.yml   # Docker services configuration
-├── package.json         # Dependencies and scripts
-├── tsconfig.json        # TypeScript configuration
-├── eslint.config.mjs    # ESLint configuration
-└── .prettierrc          # Prettier configuration
+│   ├── schema.prisma    # Prisma schema
+│   └── seed.ts          # Seed script
+├── docker-compose.yml   # Local Postgres
+├── package.json         # Scripts and deps
+└── tsconfig.json
 ```
 
-## 🐳 Docker Development
+## Tech Stack
 
-Use Docker Compose for local development with PostgreSQL:
+- Node.js 20+, TypeScript, Fastify
+- PostgreSQL + Prisma
+- Zod for validation
+- Swagger/OpenAPI
+- ESLint + Prettier
+- tsup for builds
 
-```bash
-# Start PostgreSQL database
-docker-compose up -d
+## Deploying
 
-# The API will connect to the database running in Docker
-npm run dev
-```
+General steps:
 
-## 🚀 Production Deployment
+1. Build: `npm run build`
+2. Provide production env vars (DATABASE*URL, JWT*\*, CORS_ORIGIN, PORT, NODE_ENV=production)
+3. Run migrations: `npm run prisma:migrate`
+4. Start: `npm start`
 
-1. **Build the application**
+This project is compatible with popular platforms like Render (for the API) and Neon (for managed Postgres). Point your service at the production database URL, run migrations during deploy, and expose `/docs` for API docs.
 
-   ```bash
-   npm run build
-   ```
+## License
 
-2. **Set production environment variables**
-   - Ensure `NODE_ENV=production`
-   - Configure secure `JWT_SECRET`
-   - Set appropriate `DATABASE_URL`
-   - Configure `CORS_ORIGIN` with your domain
+Private and proprietary.
 
-3. **Run database migrations**
+---
 
-   ```bash
-   npm run prisma:migrate
-   ```
-
-4. **Start the production server**
-   ```bash
-   npm start
-   ```
-
-## 🔧 Technology Stack
-
-- **Runtime**: Node.js 20+
-- **Language**: TypeScript
-- **Web Framework**: Fastify
-- **Database**: PostgreSQL
-- **ORM**: Prisma
-- **Validation**: Zod
-- **Documentation**: Swagger/OpenAPI
-- **Code Quality**: ESLint + Prettier
-- **Build Tool**: tsup
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and linting (`npm run lint`, `npm run format`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-## 📝 License
-
-This project is private and proprietary.
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Database connection errors**
-   - Ensure PostgreSQL is running
-   - Check your `DATABASE_URL` in `.env`
-   - Verify database exists and is accessible
-
-2. **Build errors**
-   - Run `npm run prisma:generate` to regenerate Prisma client
-   - Clear `node_modules` and reinstall: `rm -rf node_modules package-lock.json && npm install`
-
-3. **Port already in use**
-   - Change the `PORT` environment variable
-   - Kill existing processes: `lsof -ti:3000 | xargs kill`
-
-### Development Tips
-
-- Use `npm run prisma:studio` to visually inspect your database
-- Check the Swagger documentation at `/docs` for API details
-- Monitor logs in development mode for debugging
-- Use environment-specific configurations for different deployment stages
+Made with ❤ by [aravindasiva](https://github.com/aravindasiva)
