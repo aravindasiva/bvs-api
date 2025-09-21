@@ -1,6 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { z } from "zod";
 import {
   RegisterBodySchema,
   LoginBodySchema,
@@ -9,13 +8,12 @@ import {
   UnauthorizedSchema,
   BadRequestSchema,
   ConflictSchema,
+  AuthMeResponseSchema,
 } from "./authSchemas";
-import { UserSchema } from "../users/userSchemas";
 import * as controller from "./authController";
 import { requireAuth } from "./requireAuth";
 
-const authRoute: FastifyPluginAsync = async (app) => 
-{
+const authRoute: FastifyPluginAsync = async (app) => {
   const api = app.withTypeProvider<ZodTypeProvider>();
 
   api.post(
@@ -50,7 +48,7 @@ const authRoute: FastifyPluginAsync = async (app) =>
       schema: {
         tags: ["auth"],
         summary: "Get current user using Bearer token",
-        response: { 200: z.object({ user: UserSchema }), 401: UnauthorizedSchema },
+        response: { 200: AuthMeResponseSchema, 401: UnauthorizedSchema },
         security: [{ bearerAuth: [] }], // <-- tells Swagger this route needs Bearer token
       },
       preHandler: [requireAuth],

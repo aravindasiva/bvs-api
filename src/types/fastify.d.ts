@@ -1,9 +1,8 @@
 import "fastify";
-import type { UUID } from "./uuid";
+import { AppUser } from "#app/access/accessControl.js";
 
 declare module "fastify" {
   interface FastifyRequest {
-    // Set by requireAuth preHandler
-    user?: { id: UUID };
+    user: AppUser;
   }
 }

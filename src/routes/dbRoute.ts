@@ -4,8 +4,7 @@ import { z } from "zod";
 
 const OkSchema = z.object({ ok: z.boolean() });
 
-const dbRoutes: FastifyPluginAsync = async (app) => 
-{
+const dbRoutes: FastifyPluginAsync = async (app) => {
   const api = app.withTypeProvider<ZodTypeProvider>();
 
   api.get(
@@ -19,16 +18,12 @@ const dbRoutes: FastifyPluginAsync = async (app) =>
         },
       },
     },
-    async (req) => 
-{
+    async (req) => {
       // If you have prisma on req.server.prisma, optionally do a lightweight query
-      try 
-{
+      try {
         await req.server.prisma.$queryRawUnsafe("SELECT 1");
         return { ok: true };
-      }
- catch 
-{
+      } catch {
         return { ok: false };
       }
     },

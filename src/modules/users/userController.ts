@@ -6,24 +6,48 @@ import {
   isRecordNotFoundError,
   isUniqueConstraintError,
 } from "../../shared/errors/prisma";
+import { isAdmin, getPrimaryClientType, ClientType } from "../../access/accessControl";
 
 export async function listUsers(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  const user = req.user;
   const { limit, offset } = req.query as ListUsersQuery;
-  const result = await service.listUsers(req.server.prisma, { limit, offset });
-  reply.send(result);
+
+  if (isAdmin(user)) {
+    const result = await service.listUsers(req.server.prisma, { limit, offset });
+    reply.send(result);
+  } else {
+    const clientType = getPrimaryClientType(user);
+    if (!clientType) return reply.code(403).send({ message: "Forbidden" });
+    const result = await service.listUsers(req.server.prisma, { limit, offset }, clientType);
+    reply.send(result);
+  }
 }
 
 export async function getUser(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  const user = req.user;
   const { id } = req.params as IdParam;
-  const user = await service.getUserById(req.server.prisma, id);
-  if (!user) {
-    reply.code(404).send({ message: "User not found" });
+  const target = await service.getUserById(req.server.prisma, id);
+  if (!target) return reply.code(404).send({ message: "User not found" });
+
+  if (isAdmin(user)) {
+    reply.send(target);
     return;
   }
-  reply.send(user);
+
+  // Owner/Charterer: allow if any of the target user's memberships match the requestor's clientType
+  const clientType = getPrimaryClientType(user);
+  const targetHasSameType = target.memberships.some(
+    (m: { clientId: string; client: { type: ClientType } }) => m.client.type === clientType,
+  );
+  if (!clientType || !targetHasSameType) {
+    reply.code(403).send({ message: "Forbidden" });
+    return;
+  }
+  reply.send(target);
 }
 
 export async function createUser(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (!isAdmin(req.user)) return reply.code(403).send({ message: "Forbidden" });
   try {
     const input = req.body as CreateUserInput;
     const user = await service.createUser(req.server.prisma, input);
@@ -41,6 +65,7 @@ export async function createUser(req: FastifyRequest, reply: FastifyReply): Prom
 }
 
 export async function updateUser(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (!isAdmin(req.user)) return reply.code(403).send({ message: "Forbidden" });
   const { id } = req.params as IdParam;
   try {
     const input = req.body as UpdateUserInput;
@@ -67,6 +92,7 @@ export async function updateUser(req: FastifyRequest, reply: FastifyReply): Prom
 }
 
 export async function deleteUser(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (!isAdmin(req.user)) return reply.code(403).send({ message: "Forbidden" });
   const { id } = req.params as IdParam;
   try {
     await service.deleteUser(req.server.prisma, id);

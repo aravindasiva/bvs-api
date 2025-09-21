@@ -1,8 +1,6 @@
-function required(name: string): string 
-{
+function required(name: string): string {
   const v = process.env[name];
-  if (!v) 
-{
+  if (!v) {
     throw new Error(
       `Missing required env var: ${name}. Set it in .env. See .env.example for instructions.`,
     );
