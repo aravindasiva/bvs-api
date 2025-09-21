@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { CreateUserInput, ListUsersQuery, UpdateUserInput } from "./userSchemas";
 import { hashPassword } from "../../shared/crypto";
+import type { ClientType } from "../../access/accessControl";
 
 const publicUserSelect = {
   id: true,
@@ -10,17 +11,32 @@ const publicUserSelect = {
   avatarUrl: true,
   createdAt: true,
   updatedAt: true,
+  memberships: {
+    select: {
+      clientId: true,
+      client: {
+        select: { type: true }, // We'll alias it in your logic below
+      },
+    },
+  },
 } as const;
 
-export async function listUsers(prisma: PrismaClient, { limit, offset }: ListUsersQuery) {
+export async function listUsers(
+  prisma: PrismaClient,
+  { limit, offset }: ListUsersQuery,
+  clientType?: ClientType,
+) {
+  const where = clientType ? { memberships: { some: { client: { type: clientType } } } } : {};
+
   const [data, total] = await Promise.all([
     prisma.user.findMany({
       skip: offset,
       take: limit,
       orderBy: { createdAt: "desc" },
+      where,
       select: publicUserSelect,
     }),
-    prisma.user.count(),
+    prisma.user.count({ where }),
   ]);
 
   return {

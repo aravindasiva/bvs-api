@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   const DEFAULT_PASSWORD = "test12345";
 
-  // 1) Ensure base users
+  // 1) Ensure base users (add extra admins, owners, charterers for testing)
   const usersToSeed = [
     {
       key: "admin",
@@ -16,18 +16,39 @@ async function main() {
       avatarUrl: "https://i.pravatar.cc/150?img=10",
     },
     {
-      key: "owner",
-      email: "owen.owner@example.com",
+      key: "admin2",
+      email: "admin2@test.com",
+      firstName: "Admin2",
+      lastName: "Test",
+      avatarUrl: "https://i.pravatar.cc/150?img=13",
+    },
+    {
+      key: "owner1",
+      email: "owner1@test.com",
       firstName: "Owen",
-      lastName: "Owner",
+      lastName: "Owner1",
       avatarUrl: "https://i.pravatar.cc/150?img=11",
     },
     {
-      key: "charterer",
-      email: "charlie.charterer@example.com",
+      key: "owner2",
+      email: "owner2@test.com",
+      firstName: "Oscar",
+      lastName: "Owner2",
+      avatarUrl: "https://i.pravatar.cc/150?img=14",
+    },
+    {
+      key: "charterer1",
+      email: "charterer1@test.com",
       firstName: "Charlie",
-      lastName: "Charterer",
+      lastName: "Charterer1",
       avatarUrl: "https://i.pravatar.cc/150?img=12",
+    },
+    {
+      key: "charterer2",
+      email: "charterer2@test.com",
+      firstName: "Chloe",
+      lastName: "Charterer2",
+      avatarUrl: "https://i.pravatar.cc/150?img=15",
     },
   ] as const;
 
@@ -68,6 +89,16 @@ async function main() {
     },
   });
 
+  const ownerClient2 = await prisma.client.upsert({
+    where: { name: "OwnerCo2" },
+    update: { type: ClientType.VESSEL_OWNER },
+    create: {
+      name: "OwnerCo2",
+      type: ClientType.VESSEL_OWNER,
+      logoUrl: null,
+    },
+  });
+
   const chartererClient = await prisma.client.upsert({
     where: { name: "ChartererCo" },
     update: { type: ClientType.VESSEL_CHARTERER },
@@ -78,30 +109,62 @@ async function main() {
     },
   });
 
+  const chartererClient2 = await prisma.client.upsert({
+    where: { name: "ChartererCo2" },
+    update: { type: ClientType.VESSEL_CHARTERER },
+    create: {
+      name: "ChartererCo2",
+      type: ClientType.VESSEL_CHARTERER,
+      logoUrl: null,
+    },
+  });
+
   // 3) Ensure Memberships (composite unique [userId, clientId])
   await prisma.membership.upsert({
     where: {
-      userId_clientId: { userId: seededUsers["owner"].id, clientId: ownerClient.id },
+      userId_clientId: { userId: seededUsers["owner1"].id, clientId: ownerClient.id },
     },
     update: {},
     create: {
-      userId: seededUsers["owner"].id,
+      userId: seededUsers["owner1"].id,
       clientId: ownerClient.id,
     },
   });
 
   await prisma.membership.upsert({
     where: {
-      userId_clientId: { userId: seededUsers["charterer"].id, clientId: chartererClient.id },
+      userId_clientId: { userId: seededUsers["owner2"].id, clientId: ownerClient2.id },
     },
     update: {},
     create: {
-      userId: seededUsers["charterer"].id,
+      userId: seededUsers["owner2"].id,
+      clientId: ownerClient2.id,
+    },
+  });
+
+  await prisma.membership.upsert({
+    where: {
+      userId_clientId: { userId: seededUsers["charterer1"].id, clientId: chartererClient.id },
+    },
+    update: {},
+    create: {
+      userId: seededUsers["charterer1"].id,
       clientId: chartererClient.id,
     },
   });
 
-  // 4) Ensure Global Role for admin (BVS_ADMIN)
+  await prisma.membership.upsert({
+    where: {
+      userId_clientId: { userId: seededUsers["charterer2"].id, clientId: chartererClient2.id },
+    },
+    update: {},
+    create: {
+      userId: seededUsers["charterer2"].id,
+      clientId: chartererClient2.id,
+    },
+  });
+
+  // 4) Ensure Global Role for admins (BVS_ADMIN)
   await prisma.userGlobalRole.upsert({
     where: {
       userId_role: { userId: seededUsers["admin"].id, role: GlobalRole.BVS_ADMIN },
@@ -113,11 +176,22 @@ async function main() {
     },
   });
 
+  await prisma.userGlobalRole.upsert({
+    where: {
+      userId_role: { userId: seededUsers["admin2"].id, role: GlobalRole.BVS_ADMIN },
+    },
+    update: {},
+    create: {
+      userId: seededUsers["admin2"].id,
+      role: GlobalRole.BVS_ADMIN,
+    },
+  });
+
   console.log("Seed complete.");
   console.log("- Default password for all seeded users:", DEFAULT_PASSWORD);
-  console.log("- Admin:", usersToSeed.find((u) => u.key === "admin")?.email);
-  console.log("- Owner:", usersToSeed.find((u) => u.key === "owner")?.email);
-  console.log("- Charterer:", usersToSeed.find((u) => u.key === "charterer")?.email);
+  usersToSeed.forEach((u) => {
+    console.log(`- ${u.key}: ${u.email}`);
+  });
 }
 
 main()

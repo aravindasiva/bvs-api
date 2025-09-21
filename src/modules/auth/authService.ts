@@ -22,6 +22,17 @@ async function getUserGlobalRoles(prisma: PrismaClient, userId: string): Promise
   return roles.map((r) => r.role);
 }
 
+export async function getUserMemberships(prisma: PrismaClient, userId: string) {
+  const memberships = await prisma.membership.findMany({
+    where: { userId },
+    include: { client: { select: { id: true, type: true } } },
+  });
+  return memberships.map((m) => ({
+    clientId: m.client.id,
+    clientType: m.client.type,
+  }));
+}
+
 export async function register(prisma: PrismaClient, input: RegisterBody) {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) {
@@ -41,7 +52,9 @@ export async function register(prisma: PrismaClient, input: RegisterBody) {
   });
 
   const roles = await getUserGlobalRoles(prisma, user.id);
-  const accessToken = signAccessToken(user.id, roles);
+  const memberships = await getUserMemberships(prisma, user.id);
+
+  const accessToken = signAccessToken(user.id, roles, memberships);
   return { type: "ok" as const, user, accessToken };
 }
 
@@ -62,11 +75,12 @@ export async function login(prisma: PrismaClient, input: LoginBody) {
   });
 
   const roles = await getUserGlobalRoles(prisma, user.id);
-  const accessToken = signAccessToken(user.id, roles);
+  const memberships = await getUserMemberships(prisma, user.id);
+
+  const accessToken = signAccessToken(user.id, roles, memberships);
   return { type: "ok" as const, user: publicUser!, accessToken };
 }
 
-// Expand getCurrentUser for /auth/me
 export async function getCurrentUser(prisma: PrismaClient, userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
