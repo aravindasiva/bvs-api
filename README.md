@@ -28,7 +28,7 @@ npm install
 
 ```bash
 cp .env.example .env
-# edit .env with your DATABASE_URL and JWT_* values
+# edit .env with your DATABASE_URL, JWT_SECRET, and other JWT_* values
 ```
 
 3. Setup database
